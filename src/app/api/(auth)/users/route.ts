@@ -2,6 +2,7 @@ import connect from "@/lib/db"
 import User from "@/lib/modals/user";
 import { NextResponse } from "next/server"
 import { Types } from "mongoose";
+import { url } from "inspector";
 const ObjectId = require("mongoose").Types.ObjectId;
 
 //get users
@@ -80,6 +81,48 @@ export const PATCH = async (request: Request) => {
     catch (error: any) {
         return new NextResponse("Error in updating users" + error.message, { status: 500 })
 
+
+    }
+}
+
+//delete user
+
+export const DELETE = async (request: Request) => {
+
+    try {
+        const { searchParams } = new URL(request.url);
+        const userId = searchParams.get('userId');
+        if (!userId) {
+            return new NextResponse(
+                JSON.stringify({ message: "Id  not found in database" }),
+                { status: 400 }
+            )
+        }
+
+        if (!Types.ObjectId.isValid(userId)) {
+            return new NextResponse(
+                JSON.stringify({ message: "User id is invalid" }), { status: 400 }
+            )
+        }
+        await connect();
+        const deletedUser = await User.findByIdAndDelete(
+            new Types.ObjectId(userId)
+
+        )
+        if (!deletedUser) {
+            return new NextResponse(
+                JSON.stringify({ message: "User not found in the database" }), { status: 400 }
+            )
+        }
+
+        return new NextResponse(
+            JSON.stringify({ message: "User deleted successfully", user: deletedUser }), { status: 200 }
+        )
+
+
+    }
+    catch (error: any) {
+        return new NextResponse("Error in deleting users" + error.message, { status: 500 })
 
     }
 }
