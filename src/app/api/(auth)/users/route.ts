@@ -1,10 +1,10 @@
 import connect from "@/lib/db"
 import User from "@/lib/modals/user";
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 import { Types } from "mongoose";
-import { url } from "inspector";
-const ObjectId = require("mongoose").Types.ObjectId;
+import bcrypt from 'bcrypt';
 
+const ObjectId = require("mongoose").Types.ObjectId;
 //get users
 export const GET = async () => {
     try {
@@ -22,9 +22,19 @@ export const GET = async () => {
 //create users
 export const POST = async (request: Request) => {
     try {
+        //parse the request bdy
         const body = await request.json();
+        const { password } = body;
+        //connect to the database
         await connect();
-        const newUser = new User(body);
+
+        //hash the password
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+
+        const newUser = new User({ ...body, password: hashedPassword });
         await newUser.save();
 
         return new NextResponse(JSON.stringify({ message: "User is created", user: newUser }), { status: 200 })
